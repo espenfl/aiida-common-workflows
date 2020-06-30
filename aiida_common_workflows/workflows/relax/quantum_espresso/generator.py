@@ -3,7 +3,6 @@
 from aiida import orm
 
 from ..generator import RelaxInputsGenerator, RelaxType
-from .workchain import QuantumEspressoRelaxWorkChain
 
 __all__ = ('QuantumEspressoRelaxInputsGenerator',)
 
@@ -46,11 +45,10 @@ class QuantumEspressoRelaxInputsGenerator(RelaxInputsGenerator):
         from aiida_quantumespresso_epfl.common.protocol.pw import generate_inputs  # pylint: disable=import-error
 
         code = calc_engines['relax']['code']
-        process_class = QuantumEspressoRelaxWorkChain._process_class  # pylint: disable=protected-access
         pseudo_family = kwargs.pop('pseudo_family')
 
-        builder = QuantumEspressoRelaxWorkChain.get_builder()
-        inputs = generate_inputs(process_class, protocol, code, structure, pseudo_family, override={'relax': {}})
+        builder = self._process_class.get_builder()
+        inputs = generate_inputs(self._process_class, protocol, code, structure, pseudo_family, override={'relax': {}})
         builder._update(inputs)  # pylint: disable=protected-access
 
         if relaxation_type == RelaxType.ATOMS:

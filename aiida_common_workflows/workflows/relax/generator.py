@@ -23,25 +23,29 @@ class RelaxInputsGenerator(ProtocolRegistry, metaclass=ABCMeta):
 
     _calc_types = None
     _relax_types = None
+    _process_class = None
 
     def __init__(self, *args, **kwargs):
         """Construct an instance of the inputs generator, validating the class attributes."""
-        super().__init__(*args, **kwargs)
 
         def raise_invalid(message):
-            raise RuntimeError('invalid protocol registry `{}`: '.format(self.__class__.__name__) + message)
+            raise RuntimeError('invalid protocol registry `{}`: {}'.format(self.__class__.__name__, message))
+
+        try:
+            self._process_class = kwargs.pop('process_class')
+        except KeyError:
+            raise_invalid('required keyword argument `process_class` was not defined.')
+
+        super().__init__(*args, **kwargs)
 
         if self._calc_types is None:
-            message = 'invalid inputs generator `{}`: does not define `_calc_types`'.format(self.__class__.__name__)
-            raise RuntimeError(message)
+            raise_invalid('does not define `_calc_types`.')
 
         if self._relax_types is None:
-            message = 'invalid inputs generator `{}`: does not define `_relax_types`'.format(self.__class__.__name__)
-            raise RuntimeError(message)
+            raise_invalid('does not define `_relax_types`.')
 
         if any([not isinstance(relax_type, RelaxType) for relax_type in self._relax_types]):
-            message = 'invalid inputs generator `{}`: `_relax_types`'.format(self.__class__.__name__)
-            raise RuntimeError(message)
+            raise_invalid('`_relax_types` are not all an instance of `RelaxType`')
 
     @abstractmethod
     def get_builder(

@@ -3,7 +3,7 @@
 import pytest
 
 from aiida_common_workflows.protocol import ProtocolRegistry
-from aiida_common_workflows.workflows.relax import RelaxInputsGenerator, RelaxType
+from aiida_common_workflows.workflows.relax import RelaxInputsGenerator, RelaxType, CommonRelaxWorkChain
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def inputs_generator(protocol_registry):
         def get_builder(self):
             pass
 
-    return InputsGenerator()
+    return InputsGenerator(process_class=CommonRelaxWorkChain)
 
 
 def test_validation(protocol_registry):
@@ -45,23 +45,13 @@ def test_validation(protocol_registry):
         _calc_types = None
         _relax_types = None
 
+    # Abstract `get_builder` method so should raise `TypeError`
     with pytest.raises(TypeError):
         InputsGenerator()
 
     class InputsGenerator(protocol_registry, RelaxInputsGenerator):
 
         _calc_types = {'relax': {}}
-        _relax_types = None
-
-        def get_builder(self):
-            pass
-
-    with pytest.raises(RuntimeError):
-        InputsGenerator()
-
-    class InputsGenerator(protocol_registry, RelaxInputsGenerator):
-
-        _calc_types = None
         _relax_types = {RelaxType.ATOMS: 'description'}
 
         def get_builder(self):
@@ -73,13 +63,35 @@ def test_validation(protocol_registry):
     class InputsGenerator(protocol_registry, RelaxInputsGenerator):
 
         _calc_types = {'relax': {}}
+        _relax_types = None
+
+        def get_builder(self):
+            pass
+
+    with pytest.raises(RuntimeError):
+        InputsGenerator(process_class=CommonRelaxWorkChain)
+
+    class InputsGenerator(protocol_registry, RelaxInputsGenerator):
+
+        _calc_types = None
+        _relax_types = {RelaxType.ATOMS: 'description'}
+
+        def get_builder(self):
+            pass
+
+    with pytest.raises(RuntimeError):
+        InputsGenerator(process_class=CommonRelaxWorkChain)
+
+    class InputsGenerator(protocol_registry, RelaxInputsGenerator):
+
+        _calc_types = {'relax': {}}
         _relax_types = {'invalid-type': 'description'}
 
         def get_builder(self):
             pass
 
     with pytest.raises(RuntimeError):
-        InputsGenerator()
+        InputsGenerator(process_class=CommonRelaxWorkChain)
 
 
 def test_get_calc_types(inputs_generator):
